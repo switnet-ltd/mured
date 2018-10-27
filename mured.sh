@@ -30,27 +30,43 @@ RED_SCK_ORIG=/var/run/redis/redis.sock
 RED_SCK_ADD=/var/run/redis/redis$RED_SUFIX.sock
 RED_VAR_ORIG=/var/lib/redis
 RED_VAR_ADD=/var/lib/redis$RED_SUFIX
+PORT_BASE=$(grep -r "port " $(ls /etc/redis/redis*.conf) | cut -d ":" -f2 | grep ^[^#] | sort -r | cut -d " " -f2 | head -n 1)
 
 install -o redis -g redis -d $RED_VAR_ADD
 
-#Checking variables phase
-check_unixsocket() {
-if grep ^[^#] $RED_CONF_ORIG | grep "unixsocket "
-then
-	echo "Redis configured with unixsocket"
-	elif grep ^[^#] $RED_CONF_ORIG | grep "port"
-	then
-	echo "Redis configured using port: $(grep ^[^#] /etc/redis/redis.conf | grep port | cut -d " " -f2)"
-	echo "Exiting... for this release we only support unixsocket connection."
-	exit
-else 
-	echo "Not detected configuration"
+echo "What kind of connection should this redis instance use?
+TCP = 1 || unixsocket = 2"
+while [[ $RED_CON != 1 && $RED_CON != 2 ]]
+do
+read RED_CON
+if [ $RED_CON = 1 ]; then
+echo "We'll setup tpc connection"
+SET_RED=1
+elif [ $RED_CON = 2 ]; then
+echo "We'll setup unix connection."
+	else
+	echo "Only 1 or 2 are valid responses."
 fi
-}
-
-check_unixsocket
+done
 
 cp -p $RED_CONF_ORIG $RED_CONF_ADD
+PORT_NUM_LIN=$(grep -n "port" $RED_CONF_ADD | grep -v "[0-9]:#" | cut -d ":" -f1)
+if [[ $PORT_BASE = 0 && $SET_RED = 1 ]]; then
+	NEW_PORT=6379
+	sed -i "$PORT_NUM_LIN s|.*port .*|port $NEW_PORT|" $RED_CONF_ADD
+	elif [[ $PORT_BASE != 0 && $SET_RED = 1 ]]; then
+		NEW_PORT=$((PORT_BASE + 1))
+		sed -i "$PORT_NUM_LIN s|.*port .*|port $NEW_PORT|" $RED_CONF_ADD
+	elif [ $RED_CON = 2 ]; then
+		echo "Configuring redis unix socket"
+		NEW_PORT=0
+		sed -i "$PORT_NUM_LIN s|.*port .*|port $NEW_PORT|" $RED_CONF_ADD
+	else
+		echo "Invalid option"
+		echo "Please report to: https://github.com/switnet-ltd/mured"
+	exit
+fi
+
 echo "-> Setting up conf file..."
 sed -i "s|$RED_PID_ORIG|$RED_PID_ADD|" $RED_CONF_ADD
 sed -i "s|$RED_SCK_ORIG|$RED_SCK_ADD|" $RED_CONF_ADD
@@ -68,7 +84,7 @@ sed -i "s|redis.service|redis$RED_SUFIX.service|" $RED_SYS_ADD
 systemctl enable redis-server$RED_SUFIX.service
 systemctl start redis-server$RED_SUFIX.service
 
-echo "-> Check details of added redis at:"
+echo "-> Check details of new redis instance at:"
 echo $RED_CONF_ADD
 echo $RED_LOG_ADD
 echo $RED_SCK_ADD
