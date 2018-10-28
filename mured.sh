@@ -32,14 +32,14 @@ while [[ -z $RED_SUFIX ]]
 do
 echo "These have been already taken (avoid them):"
 if [[ -z "$REDIS_INST" ]]; then
-	echo " -> Seems there is no other custom instance present."
+	echo " -> Seems there is no other custom redis instance present."
 else
 	echo $REDIS_INST
 fi
 
 read RED_SUFIX
 if [[ ! -z $RED_SUFIX ]]; then
-	echo "We'll use \"$RED_SUFIX\" "
+	echo "We'll use sufix \"$RED_SUFIX\" "
 else
 	echo "Please enter a small sufix for this redis instance."
 fi
@@ -94,16 +94,16 @@ USOCK_NUM_LIN=$(grep -n "unixsocket " $RED_CONF_ADD | cut -d ":" -f1)
 USOCK_PERM_LIN=$(grep -n "unixsocketperm" $RED_CONF_ADD | cut -d ":" -f1)
 
 if [ "$PORT_BASE" = "0" ] && [ "$SET_RED" = "1" ]; then
-	NEW_PORT=6379
+	export NEW_PORT=6379
 	sed_var_conf $PORT_NUM_LIN port $NEW_PORT $RED_CONF_ADD
 	close_socket unixsocket $RED_CONF_ADD
 elif [ "$PORT_BASE" != "0" ] && [ "$SET_RED" = "1" ]; then
-	NEW_PORT=$((PORT_BASE + 1))
+	export NEW_PORT=$((PORT_BASE + 1))
 	sed_var_conf $PORT_NUM_LIN port $NEW_PORT $RED_CONF_ADD
 	close_socket unixsocket $RED_CONF_ADD
 elif [ "$RED_CON" = "2" ]; then
 	echo "Configuring redis unix socket"
-	NEW_PORT=0
+	export NEW_PORT=0
 	sed -i "s|# unixsocket|\ \ unixsocket|g" $RED_CONF_ADD
 	sed_var_conf $PORT_NUM_LIN port $NEW_PORT $RED_CONF_ADD
 	sed_var_conf $USOCK_PERM_LIN unixsocketperm 770 $RED_CONF_ADD
@@ -125,17 +125,15 @@ echo "-> Setting up system service"
 sed -i "s|$RED_CONF_ORIG|$RED_CONF_ADD|" $RED_SYS_ADD
 sed -i "s|$RED_PID_ORIG|$RED_PID_ADD|" $RED_SYS_ADD
 sed -i "s|$RED_VAR_ORIG|$RED_VAR_ADD|" $RED_SYS_ADD
-sed -i "s|redis.service|redis$RED_SUFIX.service|" $RED_SYS_ADD
+sed -i "s|redis.service|redis_$RED_SUFIX.service|" $RED_SYS_ADD
 
-systemctl enable redis-server$RED_SUFIX.service
-systemctl start redis-server$RED_SUFIX.service
+systemctl enable redis-server_$RED_SUFIX.service
+systemctl start redis-server_$RED_SUFIX.service
 
 echo "
 New redis instance ready!
 "
 echo "-> This redis instance is using:"
-
-
 if [ $RED_CON = 1 ]; then
 	echo "	* Port: $NEW_PORT
 	* Socket: (disabled)"
