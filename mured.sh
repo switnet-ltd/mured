@@ -26,7 +26,7 @@ if [ "$(dpkg-query -W -f='${Status}' redis-server 2>/dev/null | grep -c "ok")" =
 		echo -e "\n---- Install Redis Server ----"
 		apt -yqq install redis-server
 fi
-REDIS_INST=$(find /etc/redis -name redis* | cut -d "_" -f2 | grep -v redis | cut -d "." -f1 |  sort -r)
+REDIS_INST=$(find /etc/redis -name redis* | cut -d "_" -f2 | grep -v redis | sed "s|.conf||" |  sort -r)
 echo "Redis sufix:"
 while [[ -z $RED_SUFIX ]]
 do
@@ -93,17 +93,15 @@ PORT_NUM_LIN=$(grep -n "port" $RED_CONF_ADD | grep -v "[0-9]:#" | cut -d ":" -f1
 USOCK_NUM_LIN=$(grep -n "unixsocket " $RED_CONF_ADD | cut -d ":" -f1)
 USOCK_PERM_LIN=$(grep -n "unixsocketperm" $RED_CONF_ADD | cut -d ":" -f1)
 
-if [ $PORT_BASE = 0 ] && [ $SET_RED = 1 ]; then
+if [ "$PORT_BASE" = "0" ] && [ "$SET_RED" = "1" ]; then
 	NEW_PORT=6379
 	sed_var_conf $PORT_NUM_LIN port $NEW_PORT $RED_CONF_ADD
 	close_socket unixsocket $RED_CONF_ADD
-	#sed -i "$PORT_NUM_LIN s|.*port .*|port $NEW_PORT|" $RED_CONF_ADD
-elif [ $PORT_BASE != 0 ] && [ $SET_RED = 1 ]; then
+elif [ "$PORT_BASE" != "0" ] && [ "$SET_RED" = "1" ]; then
 	NEW_PORT=$((PORT_BASE + 1))
 	sed_var_conf $PORT_NUM_LIN port $NEW_PORT $RED_CONF_ADD
 	close_socket unixsocket $RED_CONF_ADD
-	#sed -i "$PORT_NUM_LIN s|.*port .*|port $NEW_PORT|" $RED_CONF_ADD
-elif [ $RED_CON = 2 ]; then
+elif [ "$RED_CON" = "2" ]; then
 	echo "Configuring redis unix socket"
 	NEW_PORT=0
 	sed -i "s|# unixsocket|\ \ unixsocket|g" $RED_CONF_ADD
