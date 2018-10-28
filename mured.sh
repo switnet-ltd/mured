@@ -77,7 +77,7 @@ while [[ $RED_CON != 1 && $RED_CON != 2 ]]
 do
 read RED_CON
 if [ $RED_CON = 1 ]; then
-	echo "We'll setup \"tpc\" connection"
+	echo "We'll setup \"tcp\" connection"
 	SET_RED=1
 elif [ $RED_CON = 2 ]; then
 	echo "We'll setup \"unixsocket\" connection."
