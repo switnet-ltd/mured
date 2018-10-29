@@ -56,7 +56,7 @@ RED_SCK_ORIG=/var/run/redis/redis.sock
 RED_SCK_ADD=/var/run/redis/redis_$RED_SUFIX.sock
 RED_VAR_ORIG=/var/lib/redis
 RED_VAR_ADD=/var/lib/redis_$RED_SUFIX
-PORT_BASE=$(grep -n "port" $(find /etc/redis/redis*.conf) | grep -v "[0-9]:#" | cut -d ":" -f3 | sort -r | cut -d " " -f2 | head -n 1)
+PORT_BASE=$(grep -n "port" $(find /etc/redis/redis.conf) | grep -v "[0-9]:#" | awk 'NF>1{print $NF}' | sort -r | head -n 1)
 sed_var_conf() {
 	sed -i "$1 s|.*$2.*|$2 $3|" $4
 	}
