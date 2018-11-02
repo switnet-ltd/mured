@@ -73,7 +73,7 @@ echo "
 What kind of connection should this redis instance use?
 TCP = 1 || unixsocket = 2
 "
-while [[ $RED_CON != 1 && "$RED_CON" != 2 ]]
+while [[ "$RED_CON" != 1 && "$RED_CON" != 2 ]]
 do
 read RED_CON
 if [ "$RED_CON" = "1" ]; then
@@ -85,6 +85,13 @@ else
 	echo "Only \"1\" or \"2\" are valid responses."
 fi
 done
+
+if [ "$RED_CON" = "1" ]; then
+	echo "We'll setup \"tcp\" connection"
+	SET_RED=1
+elif [ "$RED_CON" = "2" ]; then
+	echo "We'll setup \"unixsocket\" connection."
+fi
 
 install -o redis -g redis -d $RED_VAR_ADD
 cp -p $RED_CONF_ORIG $RED_CONF_ADD
