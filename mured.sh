@@ -56,7 +56,7 @@ RED_SCK_ORIG=/var/run/redis/redis.sock
 RED_SCK_ADD=/var/run/redis/redis_$RED_SUFIX.sock
 RED_VAR_ORIG=/var/lib/redis
 RED_VAR_ADD=/var/lib/redis_$RED_SUFIX
-PORT_BASE=$(grep -n "port" $(find /etc/redis/redis.conf) | grep -v "[0-9]:#" | awk 'NF>1{print $NF}' | sort -r | head -n 1)
+PORT_BASE=$(grep -n "port" $(find /etc/redis/redis*.conf) | grep -v "[0-9]:#" | awk 'NF>1{print $NF}' | sort -r | head -n 1)
 sed_var_conf() {
 	sed -i "$1 s|.*$2.*|$2 $3|" $4
 	}
@@ -73,13 +73,13 @@ echo "
 What kind of connection should this redis instance use?
 TCP = 1 || unixsocket = 2
 "
-while [[ $RED_CON != 1 && $RED_CON != 2 ]]
+while [[ $RED_CON != 1 && "$RED_CON" != 2 ]]
 do
 read RED_CON
-if [ $RED_CON = 1 ]; then
+if [ "$RED_CON" = "1" ]; then
 	echo "We'll setup \"tcp\" connection"
 	SET_RED=1
-elif [ $RED_CON = 2 ]; then
+elif [ "$RED_CON" = "2" ]; then
 	echo "We'll setup \"unixsocket\" connection."
 else
 	echo "Only \"1\" or \"2\" are valid responses."
